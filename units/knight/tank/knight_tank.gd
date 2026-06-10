@@ -33,8 +33,8 @@ func attack_state():
 		stop_all_sfx()
 		return
 	
-	if $AnimatedSprite2D.frame == 20:
+	if consume_animation_frame_event("hit_sfx", 20):
 		hit_sfx.play()
 		# whack_sfx.pitch_scale = randf_range(0.9, 1.1)
-	if $AnimatedSprite2D.frame == 24:
+	if consume_animation_frame_event("damage", 24):
 		do_damage($RayCast2D.get_collider())

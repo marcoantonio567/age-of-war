@@ -27,21 +27,21 @@ func _process(delta):
 
 func idle_attack_state():
 	super()
-	if $AnimatedSprite2D.frame == 3:
+	if consume_animation_frame_event("range_damage", 3):
 		do_damage($RayCast2D_range.get_collider())
-	elif $AnimatedSprite2D.frame == 2:
+	elif consume_animation_frame_event("range_sfx", 2):
 		$sfx/range_sfx.play()
 
 func melee_attack_state():
 	super()
-	if $AnimatedSprite2D.frame == 16:
+	if consume_animation_frame_event("melee_damage", 16):
 		do_damage($RayCast2D_range.get_collider())
-	elif $AnimatedSprite2D.frame == 15:
+	elif consume_animation_frame_event("melee_sfx", 15):
 		$sfx/melee_sfx.play()
 
 func walk_attack_state(delta):
 	super(delta)
-	if $AnimatedSprite2D.frame == 17:
+	if consume_animation_frame_event("walk_range_damage", 17):
 		do_damage($RayCast2D_range.get_collider())
-	elif $AnimatedSprite2D.frame == 15:
+	elif consume_animation_frame_event("walk_range_sfx", 15):
 		$sfx/range_sfx.play()

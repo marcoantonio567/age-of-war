@@ -34,6 +34,7 @@ var money_die_reward
 var damage_1_frame = null
 var hit_sfx_1_frame = null
 var whoosh_sfx_1_frame = null
+var animation_event_frames := {}
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -139,7 +140,24 @@ func take_damage(outside_damage):
 	$Control/health_bar.size.x = 48 * health / max_health
 	
 func do_damage(unit_to_be_damaged):
+	if unit_to_be_damaged == null:
+		return
 	unit_to_be_damaged.take_damage(damage)
+
+func consume_animation_frame_event(event_name: String, target_frame: int) -> bool:
+	var key = animated_sprite.animation + ":" + event_name + ":" + str(target_frame)
+	var current_frame = animated_sprite.frame
+	var previous_frame = int(animation_event_frames.get(key, -1))
+	animation_event_frames[key] = current_frame
+	if previous_frame == current_frame:
+		return false
+	if current_frame == target_frame:
+		return true
+	if previous_frame < 0:
+		return current_frame > target_frame
+	if previous_frame < current_frame:
+		return previous_frame < target_frame and current_frame > target_frame
+	return target_frame > previous_frame or target_frame <= current_frame
 
 func is_idle_or_idle_attacking():
 	if current_state == state.idle or current_state == state.attack:
@@ -182,6 +200,7 @@ func change_state(new_state):
 
 func change_to_attack_state():
 	current_state = state.attack
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_attack_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -192,6 +211,7 @@ func change_to_attack_state():
 
 func change_to_die_state():
 	current_state = state.die
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_die_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -201,6 +221,7 @@ func change_to_die_state():
 
 func change_to_idle_state():
 	current_state = state.idle
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_idle_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -208,6 +229,7 @@ func change_to_idle_state():
 
 func change_to_walk_state():
 	current_state = state.walk
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_walk_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -222,6 +244,7 @@ func _on_animated_sprite_2d_animation_finished():
 		
 		
 func _on_animated_sprite_2d_animation_looped():
+	animation_event_frames.clear()
 	if current_state == state.attack and (animated_sprite.get_animation() == "attack_1" or animated_sprite.get_animation() == "attack_2"):
 		# randomly pick between the two animations and play the attack animation again
 		animated_sprite.play("attack_" + str(randi_range(1, 2)))

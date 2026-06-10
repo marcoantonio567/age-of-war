@@ -28,8 +28,8 @@ func attack_state():
 		stop_all_sfx()
 		return
 	
-	if animated_sprite.frame == 3:
+	if consume_animation_frame_event("hit_sfx", 3):
 		$sfx/stab_02.play()
 		# whack_sfx.pitch_scale = randf_range(0.9, 1.1)
-	if animated_sprite.frame == 9:
+	if consume_animation_frame_event("damage", 9):
 		do_damage(melee_ray_cast.get_collider())

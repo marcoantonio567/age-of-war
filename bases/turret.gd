@@ -22,6 +22,7 @@ var no_rotation: bool
 var play_audio_repeated: bool
 
 var spawn_explosion_effect : bool
+var animation_event_frames := {}
 
 
 # Called when the node enters the scene tree for the first time.
@@ -59,12 +60,13 @@ func _process(delta):
 			else: # Turret is owned by player
 				$AnimatedSprite2D.rotation = target_position.angle()
 		
-		if $AnimatedSprite2D.frame == spawn_projectile_frame or $AnimatedSprite2D.frame == spawn_projectile_frame2:
+		if consume_animation_frame_event("projectile", spawn_projectile_frame) or consume_animation_frame_event("projectile", spawn_projectile_frame2):
 			spawn_projectile(target_position.normalized(), projectile_texture)
-		elif ($AnimatedSprite2D.frame == play_audio_frame or $AnimatedSprite2D.frame == play_audio_frame2) and ($sfx/AudioStreamPlayer2D.is_playing() == false or play_audio_repeated == true):
+		elif (consume_animation_frame_event("audio", play_audio_frame) or consume_animation_frame_event("audio", play_audio_frame2)) and ($sfx/AudioStreamPlayer2D.is_playing() == false or play_audio_repeated == true):
 			$sfx/AudioStreamPlayer2D.play()
 	else:
 		# TODO wait for attack animation to finish before moving to idle state
+		animation_event_frames.clear()
 		$AnimatedSprite2D.play("idle")
 
 
@@ -95,3 +97,21 @@ func spawn_projectile(direction, texture):
 		projectile.offspring_texture = offspring_texture
 	projectile.spawn_explosion_effect = spawn_explosion_effect
 	get_node("/root/main_game").add_child(projectile)
+
+func consume_animation_frame_event(event_name: String, target_frame) -> bool:
+	if target_frame == null:
+		return false
+	var frame = int(target_frame)
+	var key = $AnimatedSprite2D.animation + ":" + event_name + ":" + str(frame)
+	var current_frame = $AnimatedSprite2D.frame
+	var previous_frame = int(animation_event_frames.get(key, -1))
+	animation_event_frames[key] = current_frame
+	if previous_frame == current_frame:
+		return false
+	if current_frame == frame:
+		return true
+	if previous_frame < 0:
+		return current_frame > frame
+	if previous_frame < current_frame:
+		return previous_frame < frame and current_frame > frame
+	return frame > previous_frame or frame <= current_frame

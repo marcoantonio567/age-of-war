@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://3qpu205icvjb"]
+[gd_scene load_steps=15 format=3 uid="uid://3qpu205icvjb"]
 
 [ext_resource type="Script" path="res://main_game.gd" id="1_44exb"]
 [ext_resource type="Texture2D" uid="uid://bk20tm6uudxsk" path="res://age of war sprites/bg/background.png" id="2_6kpfg"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://effects/spawn_aura.tscn" id="7_m5ets"]
 [ext_resource type="PackedScene" uid="uid://d4bgctdvogk2y" path="res://ai_spawner.tscn" id="11_jpaar"]
 [ext_resource type="PackedScene" uid="uid://c36x5w6hobq86" path="res://bases/player_base.tscn" id="15_kvrvk"]
+[ext_resource type="Script" path="res://player_ai_controller.gd" id="16_53gik"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_gir1o"]
 font = ExtResource("6_hq4av")
@@ -151,6 +152,9 @@ position = Vector2(1874, 565)
 
 [node name="EnemySpawnAura" parent="ai_spawner" instance=ExtResource("7_m5ets")]
 position = Vector2(-10, -43)
+
+[node name="player_ai_controller" type="Node" parent="."]
+script = ExtResource("16_53gik")
 
 [node name="medival_special_timer" type="Timer" parent="."]
 

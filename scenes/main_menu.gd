@@ -1,9 +1,7 @@
 extends Control
 
 func _on_play_pressed():
-	GlobalVariables.current_stage = GlobalVariables.stage.cave
-	GlobalVariables.player_exp = 0
-	GlobalVariables.player_money = 175
+	GlobalVariables.reset_run_state()
 	get_tree().change_scene_to_file("res://scenes/difficulty_selection.tscn")
 
 func _on_instructions_pressed():

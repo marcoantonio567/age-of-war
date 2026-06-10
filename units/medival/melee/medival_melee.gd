@@ -29,15 +29,15 @@ func attack_state():
 		return
 	
 	if animated_sprite.get_animation() == "attack_1":
-		if animated_sprite.frame == 3:
+		if consume_animation_frame_event("attack_1_sfx", 3):
 			$sfx/stab_01.play()
-		if animated_sprite.frame == 16:
+		if consume_animation_frame_event("attack_1_damage", 16):
 			do_damage($RayCast2D.get_collider())
 	else:
 		# attack_2 is playing
-		if animated_sprite.frame == 10:
+		if consume_animation_frame_event("attack_2_sfx", 10):
 			$sfx/whoosh_02.play()
 			$sfx/sword_clash_01.play()
-		if animated_sprite.frame == 23:
+		if consume_animation_frame_event("attack_2_damage", 23):
 			do_damage($RayCast2D.get_collider())
 	pass

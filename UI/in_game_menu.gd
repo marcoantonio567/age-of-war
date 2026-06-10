@@ -7,6 +7,10 @@ var current_menu
 var queue : Array = []
 var loading_unit = false
 var load_finish = false
+var speed_button: Button
+var ai_visualizer: Control
+var progress_bar: ProgressBar
+var progress_label: Label
 
 signal spawn_melee
 signal spawn_range
@@ -15,15 +19,20 @@ signal spawn_super_soldier
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	Engine.time_scale = GlobalVariables.game_speed
 	current_menu = menu.root
 	$default_menu/root_hbox_container.show()
 	$units_menu.hide()
 	$turret_menu.hide()
+	_create_speed_button()
+	_create_progress_bar()
+	_create_ai_visualizer()
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	update_queue_hud()
+	_update_progress_bar()
 	if queue.size() != 0 and loading_unit == false:
 		loading_unit = true
 		load_first_unit_in_queue()
@@ -35,6 +44,83 @@ func _process(delta):
 		$sublabel_queue.show()
 	else:
 		$sublabel_queue.hide()
+
+
+func _create_speed_button():
+	speed_button = Button.new()
+	speed_button.name = "speed_button"
+	speed_button.text = _get_speed_button_text()
+	speed_button.tooltip_text = "Alternar velocidade do jogo"
+	speed_button.custom_minimum_size = Vector2(56, 34)
+	speed_button.offset_left = 1084
+	speed_button.offset_top = 8
+	speed_button.offset_right = 1140
+	speed_button.offset_bottom = 42
+	speed_button.focus_mode = Control.FOCUS_NONE
+	speed_button.pressed.connect(_on_speed_button_pressed)
+	add_child(speed_button)
+
+func _create_progress_bar():
+	progress_label = Label.new()
+	progress_label.name = "ai_progress_label"
+	progress_label.text = "IA gen 1 - progresso 0%"
+	progress_label.offset_left = 356
+	progress_label.offset_top = 56
+	progress_label.offset_right = 588
+	progress_label.offset_bottom = 78
+	progress_label.add_theme_color_override("font_color", Color(0.82, 0.94, 1.0, 1.0))
+	progress_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1))
+	add_child(progress_label)
+
+	progress_bar = ProgressBar.new()
+	progress_bar.name = "ai_progress_bar"
+	progress_bar.min_value = 0
+	progress_bar.max_value = 100
+	progress_bar.value = 0
+	progress_bar.show_percentage = false
+	progress_bar.offset_left = 356
+	progress_bar.offset_top = 80
+	progress_bar.offset_right = 620
+	progress_bar.offset_bottom = 100
+	progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(progress_bar)
+
+
+func _create_ai_visualizer():
+	ai_visualizer = load("res://UI/ai_decision_visualizer.gd").new()
+	ai_visualizer.name = "ai_decision_visualizer"
+	ai_visualizer.position = Vector2(12, 92)
+	ai_visualizer.size = Vector2(328, 224)
+	add_child(ai_visualizer)
+
+
+func _on_speed_button_pressed():
+	if Engine.time_scale < 1.5:
+		Engine.time_scale = 2.0
+	elif Engine.time_scale < 3.0:
+		Engine.time_scale = 4.0
+	else:
+		Engine.time_scale = 1.0
+	GlobalVariables.game_speed = Engine.time_scale
+	speed_button.text = _get_speed_button_text()
+
+
+func _get_speed_button_text() -> String:
+	return str(int(GlobalVariables.game_speed)) + "x"
+
+
+func _update_progress_bar():
+	if progress_bar == null:
+		return
+	progress_bar.value = GlobalVariables.ai_current_progress * 100.0
+	var best_progress = 0.0
+	if GlobalVariables.ai_best_run.is_empty() == false:
+		best_progress = float(GlobalVariables.ai_best_run.get("progress", 0.0))
+	progress_label.text = "IA gen {gen} - atual {current}% - melhor {best}%".format({
+		"gen": GlobalVariables.ai_generation,
+		"current": int(GlobalVariables.ai_current_progress * 100.0),
+		"best": int(best_progress * 100.0),
+	})
 
 
 func _on_unit_pressed():

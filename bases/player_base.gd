@@ -141,11 +141,19 @@ func take_damage(damage):
 	$PanelContainer/current_health.custom_minimum_size.y = 250 * health/max_health
 	$Label.text = str(health)
 	if health <= 0:
+		var ai_controller = get_node_or_null("/root/main_game/player_ai_controller")
 		if is_player_owned == true:
 			MusicManager.audioStreamPlayer.stop()
+			if GlobalVariables.ai_training_enabled and ai_controller != null:
+				ai_controller.finish_run(false, "player_base_destroyed")
+				MusicManager.audioStreamPlayer.play()
+				get_tree().call_deferred("change_scene_to_file", "res://main_game.tscn")
+				return
 			get_tree().change_scene_to_file("res://scenes/game_over.tscn")
 		elif is_player_owned == false:
 			MusicManager.audioStreamPlayer.stop()
+			if ai_controller != null:
+				ai_controller.finish_run(true, "enemy_base_destroyed")
 			get_tree().change_scene_to_file("res://scenes/win_screen.tscn")
 
 func get_number_of_turret_slots():
@@ -408,3 +416,49 @@ func get_next_available_spot():
 			return index
 		index += 1 
 	return null
+
+
+### Player AI ###
+
+func buy_player_turret(age: String, turret_number: int) -> bool:
+	var index = get_next_available_spot()
+	if index == null:
+		return false
+	var turret_index: int = int(index)
+	var turret_base = load("res://bases/" + age + "_turret_" + str(turret_number) + ".tscn").instantiate()
+	turret_base.name += "_" + str(randi())
+	turret_base.is_player_owned = true
+	self.add_child(turret_base)
+	turret_base.position = get_node("button_container").get_child(turret_index).position + Vector2(16, 16)
+	turret_array[turret_index] = 1
+	turret_data[turret_index] = turret_base
+	return true
+
+
+func upgrade_player_turret(age: String) -> bool:
+	for index in range(0, turret_array.size()):
+		if turret_array[index] != 1:
+			continue
+		var current_age = get_turret_age(index)
+		var current_tier = int(get_turret_tier(index))
+		var next_tier = current_tier
+		if current_age == age:
+			if current_tier >= 3:
+				continue
+			next_tier = current_tier + 1
+		var price = GlobalVariables.get_turret_price(GlobalVariables.get_stage_from_string(age), next_tier)
+		if GlobalVariables.player_money < price:
+			continue
+		GlobalVariables.player_money -= price
+		turret_data[index].queue_free()
+		turret_data[index] = null
+		turret_array[index] = 0
+		var turret_base = load("res://bases/" + age + "_turret_" + str(next_tier) + ".tscn").instantiate()
+		turret_base.name += "_" + str(randi())
+		turret_base.is_player_owned = true
+		self.add_child(turret_base)
+		turret_base.position = get_node("button_container").get_child(index).position + Vector2(16, 16)
+		turret_array[index] = 1
+		turret_data[index] = turret_base
+		return true
+	return false

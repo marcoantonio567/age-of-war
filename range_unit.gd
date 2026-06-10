@@ -30,6 +30,7 @@ var melee_ray_cast: RayCast2D
 var die_sfx: AudioStreamPlayer2D
 
 var money_die_reward
+var animation_event_frames := {}
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -241,10 +242,28 @@ func take_damage(outside_damage):
 	$Control/health_bar.size.x = 48 * health / max_health
 
 func do_damage(unit_to_be_damaged):
+	if unit_to_be_damaged == null:
+		return
 	unit_to_be_damaged.take_damage(damage)
+
+func consume_animation_frame_event(event_name: String, target_frame: int) -> bool:
+	var key = animated_sprite.animation + ":" + event_name + ":" + str(target_frame)
+	var current_frame = animated_sprite.frame
+	var previous_frame = int(animation_event_frames.get(key, -1))
+	animation_event_frames[key] = current_frame
+	if previous_frame == current_frame:
+		return false
+	if current_frame == target_frame:
+		return true
+	if previous_frame < 0:
+		return current_frame > target_frame
+	if previous_frame < current_frame:
+		return previous_frame < target_frame and current_frame > target_frame
+	return target_frame > previous_frame or target_frame <= current_frame
 
 
 func _on_animated_sprite_2d_animation_looped():
+	animation_event_frames.clear()
 	if current_state == state.melee_attack and (animated_sprite.get_animation() == "melee_attack_1" or animated_sprite.get_animation() == "melee_attack_2"):
 		# randomly pick between the two animations and play the attack animation again
 		animated_sprite.play("melee_attack_" + str(randi_range(1, 2)))
@@ -269,6 +288,7 @@ func change_state(new_state):
 
 func change_to_die_state():
 	current_state = state.die
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_die_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -278,6 +298,7 @@ func change_to_die_state():
 
 func change_to_idle_state():
 	current_state = state.idle
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_idle_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -285,6 +306,7 @@ func change_to_idle_state():
 
 func change_to_idle_attack_state():
 	current_state = state.idle_attack
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_idle_attack_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -292,6 +314,7 @@ func change_to_idle_attack_state():
 
 func change_to_melee_attack_state():
 	current_state = state.melee_attack
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_melee_attack_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -302,6 +325,7 @@ func change_to_melee_attack_state():
 
 func change_to_walk_state():
 	current_state = state.walk
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_walk_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x
@@ -309,6 +333,7 @@ func change_to_walk_state():
 	
 func change_to_walk_attack_state():
 	current_state = state.walk_attack
+	animation_event_frames.clear()
 	animated_sprite.position = sprite_walk_attack_position
 	if animated_sprite.flip_h == true:
 		animated_sprite.position.x = -animated_sprite.position.x

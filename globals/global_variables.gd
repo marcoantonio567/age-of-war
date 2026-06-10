@@ -7,6 +7,7 @@ var move_to_center_delay_time: float = 0.0
 
 var player_money
 var player_exp
+var game_speed: float = 1.0
 
 enum stage {cave, knight, medival, miltary, future}
 var current_stage
@@ -14,12 +15,91 @@ var current_stage
 enum difficulty {normal, hard, impossible}
 var current_difficulty
 
+var ai_training_enabled: bool = true
+var ai_generation: int = 1
+var ai_current_progress: float = 0.0
+var ai_decision_log: Array = []
+var ai_last_run_decisions: Array = []
+var ai_best_run: Dictionary = {}
+var ai_current_genome: Dictionary = {}
+var ai_best_genome: Dictionary = {}
+var default_ai_genome := {
+	"advance": 1.0,
+	"special": 1.0,
+	"turret": 1.0,
+	"tank": 1.0,
+	"range": 1.0,
+	"melee": 1.0,
+	"pressure": 1.0,
+	"money": 1.0,
+	"army": 1.0,
+	"base": 1.0,
+}
+
 func _ready():
 	load_config()
-	
+	ensure_ai_genome()
+	reset_run_state()
+
+func reset_run_state():
 	player_money = 175
 	player_exp = 0
 	current_stage = stage.cave
+	ai_current_progress = 0.0
+
+func start_ai_training_run():
+	current_difficulty = difficulty.impossible
+	ai_last_run_decisions = []
+	reset_run_state()
+	ensure_ai_genome()
+
+func ensure_ai_genome():
+	if ai_current_genome.is_empty():
+		ai_current_genome = default_ai_genome.duplicate(true)
+
+func record_ai_decision(decision: String, inputs: Dictionary, outputs: Dictionary):
+	var entry = {
+		"generation": ai_generation,
+		"time": Time.get_ticks_msec(),
+		"decision": decision,
+		"progress": ai_current_progress,
+		"stage": get_current_age_as_string(),
+		"money": player_money,
+		"xp": player_exp,
+		"inputs": inputs.duplicate(true),
+		"outputs": outputs.duplicate(true),
+		"genome": ai_current_genome.duplicate(true),
+	}
+	ai_last_run_decisions.append(entry)
+	ai_decision_log.append(entry)
+	if ai_decision_log.size() > 1200:
+		ai_decision_log.pop_front()
+
+func finish_ai_training_run(won: bool, progress: float, reason: String):
+	var summary = {
+		"generation": ai_generation,
+		"won": won,
+		"progress": progress,
+		"reason": reason,
+		"decisions": ai_last_run_decisions.duplicate(true),
+		"genome": ai_current_genome.duplicate(true),
+	}
+	if won or ai_best_run.is_empty() or progress > float(ai_best_run.get("progress", 0.0)):
+		ai_best_run = summary
+		ai_best_genome = ai_current_genome.duplicate(true)
+	if won == false:
+		ai_current_genome = mutate_ai_genome(ai_best_genome if ai_best_genome.is_empty() == false else ai_current_genome)
+		ai_generation += 1
+	ai_last_run_decisions = []
+	current_difficulty = difficulty.impossible
+	reset_run_state()
+
+func mutate_ai_genome(source_genome: Dictionary) -> Dictionary:
+	var next_genome = source_genome.duplicate(true)
+	for key in default_ai_genome.keys():
+		var value = float(next_genome.get(key, default_ai_genome[key]))
+		next_genome[key] = clamp(value + randf_range(-0.16, 0.16), 0.35, 2.25)
+	return next_genome
 
 func _process(delta: float) -> void:
 	if queue_move_to_center:

@@ -27,5 +27,5 @@ func attack_state():
 		return
 	
 	
-	if animated_sprite.frame == 18:
+	if consume_animation_frame_event("damage", 18):
 		do_damage(melee_ray_cast.get_collider())
