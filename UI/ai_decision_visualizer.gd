@@ -6,6 +6,7 @@ var inputs := {
 	"xp": 0.0,
 	"army": 0.0,
 	"base": 0.0,
+	"stuck": 0.0,
 }
 var outputs := {
 	"advance": 0.0,
